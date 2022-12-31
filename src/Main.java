@@ -1,7 +1,7 @@
-import java.math.RoundingMode;
 import java.util.Scanner;
 import java.math.BigInteger;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 public class Main {
     public static void main(String[] args) {
@@ -24,8 +24,6 @@ public class Main {
         System.out.println("==================");
         System.out.println("1.) Probabilitas Individu");
         System.out.println("2.) Probabilitas Kumulatif");
-        System.out.println("3.) Probabilitas Kombinasi");
-        System.out.println("4.) Bantuan");
         System.out.println("0.) Keluar");
         System.out.print("Pilihan anda : ");
 
@@ -36,16 +34,6 @@ public class Main {
         switch (pilihan) {
             case 1 -> programHgdIndividu();
             case 2 -> programHgdKumulatif();
-            case 3 -> {
-                System.out.print("Masukkan angka : ");
-                int num3 = input.nextInt();
-                System.out.println(num3);
-            }
-            case 4 -> {
-                System.out.print("Masukkan angka : ");
-                int num4 = input.nextInt();
-                System.out.println(num4);
-            }
             case 0 -> {
                 System.out.println("Sampai Jumpa...");
                 System.exit(0);
@@ -55,55 +43,72 @@ public class Main {
         System.out.print("Apakah anda akan melanjutkan (Y/N) : ");
         String opsi = input.next();
 
-        if (opsi.equalsIgnoreCase("Y")) {
-            return true;
+        return opsi.equalsIgnoreCase("Y");
 
-        } else {
+    }
+
+    public static boolean checkInput(int x, int sample, int success, int pops) {
+        if(x > sample) {
+            System.out.println("Jumlah item tidak boleh lebih besar dari sampel!");
             return false;
-
+        } else if (sample > pops) {
+            System.out.println("Jumlah sampel tidak boleh lebih besar dari populasi!");
+            return false;
+        } else if (success > pops) {
+            System.out.println("Jumlah item dalam populasi tidak boleh lebih besar dari populasi!");
+            return false;
+        } else {
+            return true;
         }
 
+//    return x < sample && sample < success && success < pops;
     }
 
     public static void programHgdIndividu() {
         Scanner input=new Scanner(System.in);
 
-        System.out.print("Masukkan populasi item: ");
-        int pops=input.nextInt();
-        System.out.print("Masukkan sampel: ");
-        int sample=input.nextInt();
-        System.out.print("Masukkan jumlah item di populasi: ");
-        int success=input.nextInt();
-        System.out.print("Masukkan jumlah item yang diinginkan: ");
-        int xitem=input.nextInt();
+        while (true) {
+            System.out.print("Masukkan populasi item: ");
+            int pops=input.nextInt();
+            System.out.print("Masukkan sampel: ");
+            int sample=input.nextInt();
+            System.out.print("Masukkan jumlah item di populasi: ");
+            int success=input.nextInt();
+            System.out.print("Masukkan jumlah item yang diinginkan: ");
+            int xitem=input.nextInt();
 
-        if(pops>sample){
-            BigDecimal res=hypergeomdist(xitem,sample,success,pops);
-            double hasil = res.setScale(5, RoundingMode.HALF_UP).doubleValue();
-            System.out.println("Besar kemungkinan: " + hasil);
+            if(checkInput(xitem,sample,success,pops)){
+                BigDecimal res=hypergeomdist(xitem,sample,success,pops);
+                double hasil = res.doubleValue();
+                System.out.println("Besar kemungkinan: " + hasil);
+                break;
+            }
+            System.out.println("Input salah!");
         }
-        else System.out.println("Sampel tidak boleh lebih besar dari populasi!");
+
     }
 
     public static void programHgdKumulatif() {
         Scanner input=new Scanner(System.in);
 
-        System.out.print("Masukkan populasi item: ");
-        int pops=input.nextInt();
-        System.out.print("Masukkan sampel: ");
-        int sample=input.nextInt();
-        System.out.print("Masukkan jumlah item di populasi: ");
-        int success=input.nextInt();
-        System.out.print("Masukkan maksimal jumlah item yang diinginkan: ");
-        int xitem=input.nextInt();
+        while (true) {
+            System.out.print("Masukkan populasi item: ");
+            int pops=input.nextInt();
+            System.out.print("Masukkan sampel: ");
+            int sample=input.nextInt();
+            System.out.print("Masukkan jumlah item di populasi: ");
+            int success=input.nextInt();
+            System.out.print("Masukkan maksimal jumlah item yang diinginkan: ");
+            int xitem=input.nextInt();
 
-        if(pops>sample){
-            BigDecimal res=hgdCumulative(xitem,sample,success,pops);
-            double hasil = res.setScale(5, RoundingMode.HALF_UP).doubleValue();
-            //double hasil = res.doubleValue();
-            System.out.println("Besar kemungkinan: " + hasil);
+            if(checkInput(xitem,sample,success,pops)){
+                BigDecimal res=hgdCumulative(xitem,sample,success,pops);
+                double hasil = res.doubleValue();
+                System.out.println("Besar kemungkinan: " + hasil);
+                break;
+            }
+            System.out.println("Input salah!");
         }
-        else System.out.println("Sampel tidak boleh lebih besar dari populasi!");
     }
 
     public static BigInteger fact(int n) {
@@ -139,7 +144,9 @@ public class Main {
 
         // Menghitung distribusi Hypergeometrik
         //
-        // hgd(x,N,n,k) = [kCx]*[(N-k)C(n-x)]*[NCx]
+        //                 [kCx]*[(N-k)C(n-x)]  < topRes
+        // hgd(x,N,n,k) =  ___________________
+        //                       [NCx]          < botRes
 
         // h=combine(success,x)*combine((pops - success),(sample - x))/combine(pops,sample);
         // hgd=combine(success,x).multiply(combine((pops-success),(sample-x)).divide(combine(pops,sample)));
@@ -148,9 +155,8 @@ public class Main {
 
         BigDecimal topResD = new BigDecimal(topRes);
         BigDecimal botResD = new BigDecimal(botRes);
-        //hgd=topResD.divide(botResD, MathContext.DECIMAL128);
         hgd=topResD.divide(botResD, 5, RoundingMode.HALF_UP);
-
+//        hgd = hgd.setScale( 5, RoundingMode.HALF_UP);
         return hgd;
     }
 
@@ -159,8 +165,7 @@ public class Main {
         for (int i = 0; i <= x; ++i) {
             kum = kum.add(hypergeomdist(i,sample,success,pops));
         }
-        kum = kum.setScale(2, RoundingMode.HALF_DOWN);
-        //double hasil = kum.doubleValue();
+        kum = kum.setScale(5, RoundingMode.HALF_UP);
         return kum;
     }
 
